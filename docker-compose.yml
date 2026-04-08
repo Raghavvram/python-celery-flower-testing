@@ -47,7 +47,7 @@ services:
 
   celery_worker:
     build: .
-    command: celery -A worker flower --loglevel=info
+    command: celery -A worker worker --loglevel=info
     depends_on:
       rabbitmq:
         condition: service_healthy
@@ -66,20 +66,17 @@ services:
         condition: service_started
 
   flower:
-    image: mher/flower:latest  # Official Flower image
-    command: celery -A worker flower  # Points to your app module 'worker'
+    build: .  # Or use image: mher/flower:latest
+    command: celery -A worker flower  # Points to same app as worker
     ports:
       - "5555:5555"
     depends_on:
       celery_worker:
-        condition: service_started  # Wait for worker to register
+        condition: service_started
       rabbitmq:
         condition: service_healthy
       redis:
         condition: service_healthy
-    environment:
-      - CELERY_BROKER_URL=amqp://guest:guest@rabbitmq:5672/  # Adjust credentials/URL
-      - CELERY_RESULT_BACKEND=redis://redis:6379/0  # Match your Redis setup
 volumes:
   rabbitmq_data:
   redis_data:
